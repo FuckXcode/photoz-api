@@ -1,12 +1,11 @@
-const fs = require('fs');
-const path = require('path');
+const authRouter = require('./auth.router');
+const clientsRouter = require('./clients.router');
+const galleriesRouter = require('./galleries.router');
+const shareRouter = require('./share.router');
+const summaryRouter = require('./summary.router');
 
 function useRoutes(app) {
-  const routerDir = __dirname;
-  fs.readdirSync(routerDir).forEach((file) => {
-    if (file === 'index.js') return;
-    if (!file.endsWith('.router.js')) return;
-    const router = require(path.join(routerDir, file));
+  [authRouter, clientsRouter, galleriesRouter, shareRouter, summaryRouter].forEach((router) => {
     app.use(router.routes());
     app.use(router.allowedMethods());
   });
