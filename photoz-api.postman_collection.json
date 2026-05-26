@@ -1,0 +1,327 @@
+{
+  "info": {
+    "name": "photoz-api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "photoz-api-collection"
+  },
+  "variable": [
+    { "key": "baseUrl",     "value": "http://localhost:3001", "type": "string" },
+    { "key": "accessToken", "value": "",                      "type": "string" },
+    { "key": "galleryId",   "value": "",                      "type": "string" },
+    { "key": "clientId",    "value": "",                      "type": "string" },
+    { "key": "photoId",     "value": "",                      "type": "string" },
+    { "key": "shareToken",  "value": "",                      "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"your-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "  console.log('✅ accessToken saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"your-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","auth","logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/summary", "host": ["{{baseUrl}}"], "path": ["api","admin","summary"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "List Clients",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/clients", "host": ["{{baseUrl}}"], "path": ["api","admin","clients"] }
+          }
+        },
+        {
+          "name": "Create Client",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "  pm.collectionVariables.set('clientId', json.id);",
+                  "  console.log('✅ clientId saved:', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/admin/clients", "host": ["{{baseUrl}}"], "path": ["api","admin","clients"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"张三\",\n  \"phone\": \"13800000000\",\n  \"email\": \"client@example.com\",\n  \"note\": \"婚礼客户\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete Client",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/clients/{{clientId}}", "host": ["{{baseUrl}}"], "path": ["api","admin","clients","{{clientId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Galleries",
+      "item": [
+        {
+          "name": "List Galleries",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/galleries", "host": ["{{baseUrl}}"], "path": ["api","admin","galleries"] }
+          }
+        },
+        {
+          "name": "Create Gallery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "  pm.collectionVariables.set('galleryId', json.id);",
+                  "  console.log('✅ galleryId saved:', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/admin/galleries", "host": ["{{baseUrl}}"], "path": ["api","admin","galleries"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"{{clientId}}\",\n  \"title\": \"张三婚礼精选\",\n  \"selectionLimit\": 30,\n  \"expiresAt\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Get Gallery Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/galleries/{{galleryId}}", "host": ["{{baseUrl}}"], "path": ["api","admin","galleries","{{galleryId}}"] }
+          }
+        },
+        {
+          "name": "Update Gallery Mode",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/admin/galleries/{{galleryId}}/mode", "host": ["{{baseUrl}}"], "path": ["api","admin","galleries","{{galleryId}}","mode"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"browse\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Publish Gallery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.shareToken) {",
+                  "  pm.collectionVariables.set('shareToken', json.shareToken);",
+                  "  console.log('✅ shareToken saved:', json.shareToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/galleries/{{galleryId}}/publish", "host": ["{{baseUrl}}"], "path": ["api","admin","galleries","{{galleryId}}","publish"] }
+          }
+        },
+        {
+          "name": "Get Upload URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/admin/galleries/{{galleryId}}/upload-url", "host": ["{{baseUrl}}"], "path": ["api","admin","galleries","{{galleryId}}","upload-url"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileName\": \"photo-001.jpg\",\n  \"contentType\": \"image/jpeg\",\n  \"variant\": \"preview\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Add Photos (Batch)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (Array.isArray(json) && json[0]?.id) {",
+                  "  pm.collectionVariables.set('photoId', json[0].id);",
+                  "  console.log('✅ photoId saved:', json[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/admin/galleries/{{galleryId}}/photos", "host": ["{{baseUrl}}"], "path": ["api","admin","galleries","{{galleryId}}","photos"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"photos\": [\n    {\n      \"originalFileName\": \"DSC_0001.jpg\",\n      \"previewObjectKey\": \"photographers/uid/galleries/gid/previews/1234-DSC_0001.jpg\",\n      \"previewUrl\": \"https://example.com/preview.jpg\",\n      \"title\": \"\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Delete Photo",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/galleries/{{galleryId}}/photos/{{photoId}}", "host": ["{{baseUrl}}"], "path": ["api","admin","galleries","{{galleryId}}","photos","{{photoId}}"] }
+          }
+        },
+        {
+          "name": "Export Selection CSV",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/galleries/{{galleryId}}/selection.csv", "host": ["{{baseUrl}}"], "path": ["api","admin","galleries","{{galleryId}}","selection.csv"] }
+          }
+        },
+        {
+          "name": "Delete Gallery",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/admin/galleries/{{galleryId}}", "host": ["{{baseUrl}}"], "path": ["api","admin","galleries","{{galleryId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Share (Public)",
+      "item": [
+        {
+          "name": "Get Public Gallery",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/share/{{shareToken}}", "host": ["{{baseUrl}}"], "path": ["api","share","{{shareToken}}"] }
+          }
+        },
+        {
+          "name": "Submit Selection",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/share/{{shareToken}}/selection", "host": ["{{baseUrl}}"], "path": ["api","share","{{shareToken}}","selection"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"selectedPhotoIds\": [\"{{photoId}}\"],\n  \"customerName\": \"张三\",\n  \"customerMessage\": \"这几张我都很喜欢！\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
