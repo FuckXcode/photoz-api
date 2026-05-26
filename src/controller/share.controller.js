@@ -1,16 +1,17 @@
 const { getPublicGallery, submitSelection, getPhotographerNotificationEmail } = require('../service/repository.service');
 const { sendSelectionNotificationEmail } = require('../utils/mailer');
+const { success, fail } = require('../utils/response');
+const ErrorCode = require('../constants/error-codes');
 
 class ShareController {
   async getPublicGallery(ctx) {
     const { token } = ctx.params;
     const gallery = await getPublicGallery(token);
     if (!gallery) {
-      ctx.status = 404;
-      ctx.body = { error: '相册不存在或链接已失效' };
+      ctx.body = fail(ErrorCode.NOT_FOUND, '相册不存在或链接已失效');
       return;
     }
-    ctx.body = gallery;
+    ctx.body = success(gallery);
   }
 
   async submitSelection(ctx) {
@@ -25,8 +26,7 @@ class ShareController {
       });
 
       if (!result) {
-        ctx.status = 404;
-        ctx.body = { error: '相册不存在或链接已失效' };
+        ctx.body = fail(ErrorCode.NOT_FOUND, '相册不存在或链接已失效');
         return;
       }
 
@@ -46,10 +46,9 @@ class ShareController {
         console.error('[mail] 客户提交后邮件提醒失败', mailError);
       }
 
-      ctx.body = result.selection;
+      ctx.body = success(result.selection);
     } catch (err) {
-      ctx.status = err.status || 400;
-      ctx.body = { error: err.message || '提交失败' };
+      ctx.body = fail(err.errorCode || ErrorCode.INVALID_PARAMS, err.message || '提交失败');
     }
   }
 }

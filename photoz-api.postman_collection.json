@@ -37,8 +37,8 @@
               "script": {
                 "exec": [
                   "const json = pm.response.json();",
-                  "if (json.accessToken) {",
-                  "  pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "if (json.data?.accessToken) {",
+                  "  pm.collectionVariables.set('accessToken', json.data.accessToken);",
                   "  console.log('✅ accessToken saved');",
                   "}"
                 ],
@@ -102,9 +102,9 @@
               "script": {
                 "exec": [
                   "const json = pm.response.json();",
-                  "if (json.id) {",
-                  "  pm.collectionVariables.set('clientId', json.id);",
-                  "  console.log('✅ clientId saved:', json.id);",
+                  "if (json.data?.id) {",
+                  "  pm.collectionVariables.set('clientId', json.data.id);",
+                  "  console.log('✅ clientId saved:', json.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -154,9 +154,9 @@
               "script": {
                 "exec": [
                   "const json = pm.response.json();",
-                  "if (json.id) {",
-                  "  pm.collectionVariables.set('galleryId', json.id);",
-                  "  console.log('✅ galleryId saved:', json.id);",
+                  "if (json.data?.id) {",
+                  "  pm.collectionVariables.set('galleryId', json.data.id);",
+                  "  console.log('✅ galleryId saved:', json.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -209,9 +209,9 @@
               "script": {
                 "exec": [
                   "const json = pm.response.json();",
-                  "if (json.shareToken) {",
-                  "  pm.collectionVariables.set('shareToken', json.shareToken);",
-                  "  console.log('✅ shareToken saved:', json.shareToken);",
+                  "if (json.data?.shareToken) {",
+                  "  pm.collectionVariables.set('shareToken', json.data.shareToken);",
+                  "  console.log('✅ shareToken saved:', json.data.shareToken);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -248,9 +248,9 @@
               "script": {
                 "exec": [
                   "const json = pm.response.json();",
-                  "if (Array.isArray(json) && json[0]?.id) {",
-                  "  pm.collectionVariables.set('photoId', json[0].id);",
-                  "  console.log('✅ photoId saved:', json[0].id);",
+                  "if (Array.isArray(json.data) && json.data[0]?.id) {",
+                  "  pm.collectionVariables.set('photoId', json.data[0].id);",
+                  "  console.log('✅ photoId saved:', json.data[0].id);",
                   "}"
                 ],
                 "type": "text/javascript"

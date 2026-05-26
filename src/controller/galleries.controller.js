@@ -23,31 +23,28 @@ function normalizeUploadedPhotos(photos) {
 
 class GalleriesController {
   async list(ctx) {
-    ctx.body = await listGalleryItems(ctx.user.id);
+    ctx.body = success(await listGalleryItems(ctx.user.id));
   }
 
   async create(ctx) {
     const body = ctx.request.body;
     if (!body.clientId) {
-      ctx.status = 400;
-      ctx.body = { error: '请选择客户' };
+      ctx.body = fail(ErrorCode.INVALID_PARAMS, '请选择客户');
       return;
     }
     if (!body.title?.trim()) {
-      ctx.status = 400;
-      ctx.body = { error: '相册标题不能为空' };
+      ctx.body = fail(ErrorCode.INVALID_PARAMS, '相册标题不能为空');
       return;
     }
     try {
-      ctx.body = await createGallery(ctx.user.id, {
+      ctx.body = success(await createGallery(ctx.user.id, {
         clientId: body.clientId,
         title: body.title,
         selectionLimit: body.selectionLimit ?? null,
         expiresAt: body.expiresAt ?? null,
-      });
+      }));
     } catch (err) {
-      ctx.status = err.status || 400;
-      ctx.body = { error: err.message || '创建相册失败' };
+      ctx.body = fail(err.errorCode || ErrorCode.INVALID_PARAMS, err.message || '创建相册失败');
     }
   }
 
@@ -55,8 +52,7 @@ class GalleriesController {
     const { id } = ctx.params;
     const gallery = await getGalleryWithRelations(ctx.user.id, id);
     if (!gallery) {
-      ctx.status = 404;
-      ctx.body = { error: '相册不存在' };
+      ctx.body = fail(ErrorCode.NOT_FOUND, '相册不存在');
       return;
     }
     if (gallery.hasUnreadSelection && gallery.latestSelectionAt) {
@@ -64,47 +60,43 @@ class GalleriesController {
       gallery.hasUnreadSelection = false;
       gallery.lastViewedSelectionAt = gallery.latestSelectionAt;
     }
-    ctx.body = gallery;
+    ctx.body = success(gallery);
   }
 
   async remove(ctx) {
     const { id } = ctx.params;
     const objectKeys = await deleteGallery(ctx.user.id, id);
     if (objectKeys === null) {
-      ctx.status = 404;
-      ctx.body = { error: '相册不存在' };
+      ctx.body = fail(ErrorCode.NOT_FOUND, '相册不存在');
       return;
     }
     await Promise.allSettled(objectKeys.map((key) => deleteStorageObject(key)));
-    ctx.body = { ok: true };
+    ctx.body = success({ ok: true });
   }
 
   async updateMode(ctx) {
     const { id } = ctx.params;
     const { mode } = ctx.request.body;
     if (!isGalleryMode(mode)) {
-      ctx.status = 400;
-      ctx.body = { error: '相册模式不正确' };
+      ctx.body = fail(ErrorCode.INVALID_MODE, '相册模式不正确');
       return;
     }
     const gallery = await updateGalleryMode(ctx.user.id, id, mode);
     if (!gallery) {
-      ctx.status = 404;
-      ctx.body = { error: '相册不存在' };
+      ctx.body = fail(ErrorCode.NOT_FOUND, '相册不存在');
       return;
     }
-    ctx.body = gallery;
+    ctx.body = success(gallery);
   }
 
   async publish(ctx) {
     const { id } = ctx.params;
     const gallery = await publishGallery(ctx.user.id, id);
     if (!gallery) {
-      ctx.status = 404;
-      ctx.body = { error: '相册不存在' };
+      ctx.body = fail(ErrorCode.NOT_FOUND, '相册不存在');
       return;
     }
-    ctx.body = gallery;
+    ctx.body = success(gallery);
   }
 
   async getUploadUrl(ctx) {
@@ -112,30 +104,27 @@ class GalleriesController {
     const body = ctx.request.body;
 
     if (!body.fileName || !String(body.contentType || '').startsWith('image/')) {
-      ctx.status = 400;
-      ctx.body = { error: '只支持上传图片文件' };
+      ctx.body = fail(ErrorCode.INVALID_PARAMS, '只支持上传图片文件');
       return;
     }
     if (body.variant !== 'preview' && body.variant !== 'original') {
-      ctx.status = 400;
-      ctx.body = { error: '缺少图片存储类型' };
+      ctx.body = fail(ErrorCode.INVALID_PARAMS, '缺少图片存储类型');
       return;
     }
 
     const gallery = await getGalleryWithRelations(ctx.user.id, id);
     if (!gallery) {
-      ctx.status = 404;
-      ctx.body = { error: '相册不存在' };
+      ctx.body = fail(ErrorCode.NOT_FOUND, '相册不存在');
       return;
     }
 
-    ctx.body = await createPhotoUploadUrl({
+    ctx.body = success(await createPhotoUploadUrl({
       photographerId: ctx.user.id,
       galleryId: id,
       fileName: body.fileName,
       contentType: body.contentType,
       variant: body.variant,
-    });
+    }));
   }
 
   async addPhotos(ctx) {
@@ -144,41 +133,37 @@ class GalleriesController {
     const photos = normalizeUploadedPhotos(body.photos);
 
     if (photos.length === 0) {
-      ctx.status = 400;
-      ctx.body = { error: '请选择照片' };
+      ctx.body = fail(ErrorCode.INVALID_PARAMS, '请选择照片');
       return;
     }
 
     const created = await addPhotos(ctx.user.id, id, photos);
     if (!created) {
-      ctx.status = 404;
-      ctx.body = { error: '相册不存在' };
+      ctx.body = fail(ErrorCode.NOT_FOUND, '相册不存在');
       return;
     }
-    ctx.body = created;
+    ctx.body = success(created);
   }
 
   async deletePhoto(ctx) {
     const { id, photoId } = ctx.params;
     const photo = await deletePhoto(ctx.user.id, id, photoId);
     if (!photo) {
-      ctx.status = 404;
-      ctx.body = { error: '照片不存在' };
+      ctx.body = fail(ErrorCode.NOT_FOUND, '照片不存在');
       return;
     }
     await Promise.allSettled([
       deleteStorageObject(photo.previewObjectKey),
       deleteStorageObject(photo.originalObjectKey),
     ]);
-    ctx.body = { ok: true };
+    ctx.body = success({ ok: true });
   }
 
   async exportCsv(ctx) {
     const { id } = ctx.params;
     const gallery = await getGalleryWithRelations(ctx.user.id, id);
     if (!gallery) {
-      ctx.status = 404;
-      ctx.body = { error: '相册不存在' };
+      ctx.body = fail(ErrorCode.NOT_FOUND, '相册不存在');
       return;
     }
 

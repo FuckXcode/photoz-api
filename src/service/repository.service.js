@@ -3,6 +3,7 @@ const { buildPublicObjectUrl } = require('../utils/public-url');
 const { createShareToken } = require('../utils/tokens');
 const { normalizeGalleryMode, hasUnreadSelection } = require('../constants/gallery-mode');
 const { R2_PUBLIC_BASE_URL } = require('../app/config');
+const ErrorCode = require('../constants/error-codes');
 
 function mapClient(row) {
   return {
@@ -225,7 +226,7 @@ async function createGallery(photographerId, input) {
     `SELECT id FROM clients WHERE id = $1 AND photographer_id = $2`,
     [input.clientId, photographerId],
   );
-  if (clientCheck.length === 0) throw Object.assign(new Error('客户不存在'), { status: 400 });
+  if (clientCheck.length === 0) throw Object.assign(new Error('客户不存在'), { status: 400, errorCode: ErrorCode.NOT_FOUND });
 
   const { randomUUID } = require('node:crypto');
   const { slugify } = require('../utils/tokens');
@@ -413,7 +414,7 @@ async function submitSelection(token, input) {
   const gallery = galleryRows[0];
 
   if (!canSubmitGallerySelection(normalizeGalleryMode(gallery.mode))) {
-    throw Object.assign(new Error('该相册仅供浏览，不能提交选片'), { status: 400 });
+    throw Object.assign(new Error('该相册仅供浏览，不能提交选片'), { status: 400, errorCode: ErrorCode.INVALID_PARAMS });
   }
 
   const { rows: photoRows } = await pool.query(
@@ -424,11 +425,11 @@ async function submitSelection(token, input) {
   const selectedPhotoIds = (input.selectedPhotoIds ?? []).filter((id) => validPhotoIds.has(id));
 
   if (selectedPhotoIds.length === 0) {
-    throw Object.assign(new Error('至少选择一张照片'), { status: 400 });
+    throw Object.assign(new Error('至少选择一张照片'), { status: 400, errorCode: ErrorCode.INVALID_PARAMS });
   }
 
   if (typeof gallery.selection_limit === 'number' && selectedPhotoIds.length > gallery.selection_limit) {
-    throw Object.assign(new Error(`最多只能选择 ${gallery.selection_limit} 张照片`), { status: 400 });
+    throw Object.assign(new Error(`最多只能选择 ${gallery.selection_limit} 张照片`), { status: 400, errorCode: ErrorCode.INVALID_PARAMS });
   }
 
   const { rows: selectionRows } = await pool.query(

@@ -6,6 +6,35 @@
 
 ---
 
+## 统一响应格式
+
+所有接口（CSV 导出除外）均返回 HTTP **200**，业务结果通过响应体中的 `code` 字段区分。
+
+```json
+// 成功
+{ "code": 1000, "message": "success", "data": { ... } }
+
+// 失败
+{ "code": 2001, "message": "请先登录", "data": null }
+```
+
+### 业务错误码说明
+
+| code | 常量 | 说明 |
+|------|------|------|
+| `1000` | `SUCCESS` | 操作成功 |
+| `2001` | `AUTH_REQUIRED` | 未携带 token |
+| `2002` | `AUTH_INVALID` | token 过期或无效 |
+| `2003` | `EMAIL_EXISTS` | 该邮箱已注册 |
+| `2004` | `INVALID_CREDENTIALS` | 邮箱或密码错误 |
+| `3001` | `INVALID_PARAMS` | 参数缺失或格式错误 |
+| `3002` | `INVALID_MODE` | 相册模式值不合法 |
+| `4001` | `NOT_FOUND` | 资源不存在 |
+| `4002` | `CONFLICT` | 资源冲突（如重复注册） |
+| `5001` | `SERVER_ERROR` | 服务器内部错误 |
+
+---
+
 ## 认证说明
 
 除公开分享接口（`/api/share/*`）和认证接口（`/api/auth/*`）外，所有接口均需在请求头携带：
@@ -35,27 +64,31 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 201 | 注册成功并已自动登录 |
-| 202 | 注册成功，需邮件确认后才能登录 |
-| 400 | 参数缺失或格式错误 |
-| 409 | 该邮箱已注册 |
+| code | 说明 |
+|------|------|
+| `1000` | 注册成功 |
+| `3001` | 参数缺失或 Supabase 校验失败 |
+| `2003` | 该邮箱已注册 |
 
 ```json
-// 201 - 注册即登录
+// 注册即登录
 {
-  "accessToken": "eyJ...",
-  "refreshToken": "eyJ...",
-  "expiresAt": 1748000000,
-  "user": { "id": "uuid", "email": "user@example.com" }
+  "code": 1000,
+  "message": "success",
+  "data": {
+    "accessToken": "eyJ...",
+    "refreshToken": "eyJ...",
+    "expiresAt": 1748000000,
+    "user": { "id": "uuid", "email": "user@example.com" }
+  }
 }
 
-// 202 - 需邮件确认
-{ "message": "注册成功，请查收确认邮件后再登录" }
-
-// 409
-{ "error": "该邮箱已注册，请直接登录" }
+// 需邮件确认
+{
+  "code": 1000,
+  "message": "success",
+  "data": { "message": "注册成功，请查收确认邮件后再登录" }
+}
 ```
 
 ---
@@ -75,19 +108,22 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 登录成功 |
-| 400 | 参数缺失 |
-| 401 | 邮箱或密码不正确 |
+| code | 说明 |
+|------|------|
+| `1000` | 登录成功 |
+| `3001` | 参数缺失 |
+| `2004` | 邮箱或密码不正确 |
 
 ```json
-// 200
 {
-  "accessToken": "eyJ...",
-  "refreshToken": "eyJ...",
-  "expiresAt": 1748000000,
-  "user": { "id": "uuid", "email": "user@example.com" }
+  "code": 1000,
+  "message": "success",
+  "data": {
+    "accessToken": "eyJ...",
+    "refreshToken": "eyJ...",
+    "expiresAt": 1748000000,
+    "user": { "id": "uuid", "email": "user@example.com" }
+  }
 }
 ```
 
@@ -101,12 +137,12 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 登出成功 |
+| code | 说明 |
+|------|------|
+| `1000` | 登出成功 |
 
 ```json
-{ "ok": true }
+{ "code": 1000, "message": "success", "data": { "ok": true } }
 ```
 
 ---
@@ -117,17 +153,21 @@ Authorization: Bearer <access_token>
 
 **GET** `/api/admin/summary`
 
-**响应 200**
+**响应**
 
 ```json
 {
-  "clientCount": 12,
-  "galleryCount": 34,
-  "publishedCount": 20,
-  "submittedCount": 8,
-  "unreadSubmissionCount": 3,
-  "photoCount": 1024,
-  "latestGalleries": [ /* 最近 5 个相册，结构见相册列表 */ ]
+  "code": 1000,
+  "message": "success",
+  "data": {
+    "clientCount": 12,
+    "galleryCount": 34,
+    "publishedCount": 20,
+    "submittedCount": 8,
+    "unreadSubmissionCount": 3,
+    "photoCount": 1024,
+    "latestGalleries": [ /* 最近 5 个相册，结构见相册列表 */ ]
+  }
 }
 ```
 
@@ -139,20 +179,24 @@ Authorization: Bearer <access_token>
 
 **GET** `/api/admin/clients`
 
-**响应 200**
+**响应**
 
 ```json
-[
-  {
-    "id": "uuid",
-    "name": "张三",
-    "phone": "13800000000",
-    "email": "client@example.com",
-    "note": "婚礼客户",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  }
-]
+{
+  "code": 1000,
+  "message": "success",
+  "data": [
+    {
+      "id": "uuid",
+      "name": "张三",
+      "phone": "13800000000",
+      "email": "client@example.com",
+      "note": "婚礼客户",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
 ```
 
 ---
@@ -176,10 +220,10 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 创建成功，返回客户对象 |
-| 400 | `name` 为空 |
+| code | 说明 |
+|------|------|
+| `1000` | 创建成功，`data` 为客户对象 |
+| `3001` | `name` 为空 |
 
 ---
 
@@ -191,10 +235,10 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | `{ "ok": true }` |
-| 404 | 客户不存在 |
+| code | 说明 |
+|------|------|
+| `1000` | `data: { "ok": true }` |
+| `4001` | 客户不存在 |
 
 ---
 
@@ -204,29 +248,33 @@ Authorization: Bearer <access_token>
 
 **GET** `/api/admin/galleries`
 
-**响应 200**
+**响应**
 
 ```json
-[
-  {
-    "id": "uuid",
-    "clientId": "uuid",
-    "title": "张三婚礼精选",
-    "slug": "zhang-san-hun-li-jing-xuan",
-    "shareToken": "uuid.signature",
-    "status": "published",
-    "mode": "selection",
-    "selectionLimit": 30,
-    "expiresAt": null,
-    "latestSelectionAt": null,
-    "lastViewedSelectionAt": null,
-    "hasUnreadSelection": false,
-    "photoCount": 120,
-    "client": { "id": "uuid", "name": "张三" },
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  }
-]
+{
+  "code": 1000,
+  "message": "success",
+  "data": [
+    {
+      "id": "uuid",
+      "clientId": "uuid",
+      "title": "张三婚礼精选",
+      "slug": "zhang-san-hun-li-jing-xuan",
+      "shareToken": "uuid.signature",
+      "status": "published",
+      "mode": "selection",
+      "selectionLimit": 30,
+      "expiresAt": null,
+      "latestSelectionAt": null,
+      "lastViewedSelectionAt": null,
+      "hasUnreadSelection": false,
+      "photoCount": 120,
+      "client": { "id": "uuid", "name": "张三" },
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
 ```
 
 **相册状态说明**
@@ -266,10 +314,11 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 创建成功，返回相册详情（含 client、photos、selections） |
-| 400 | 参数错误或客户不存在 |
+| code | 说明 |
+|------|------|
+| `1000` | 创建成功，`data` 为相册详情（含 client、photos、selections） |
+| `3001` | 参数错误 |
+| `4001` | 客户不存在 |
 
 ---
 
@@ -279,56 +328,60 @@ Authorization: Bearer <access_token>
 
 > 调用此接口时，若相册有未读选片记录，会自动标记为已读。
 
-**响应 200**
+**响应**
+
+| code | 说明 |
+|------|------|
+| `1000` | 成功 |
+| `4001` | 相册不存在 |
 
 ```json
 {
-  "id": "uuid",
-  "title": "张三婚礼精选",
-  "status": "submitted",
-  "mode": "selection",
-  "shareToken": "uuid.signature",
-  "client": {
+  "code": 1000,
+  "message": "success",
+  "data": {
     "id": "uuid",
-    "name": "张三",
-    "phone": "13800000000",
-    "email": "client@example.com",
-    "note": "",
-    "createdAt": "...",
-    "updatedAt": "..."
-  },
-  "photos": [
-    {
+    "title": "张三婚礼精选",
+    "status": "submitted",
+    "mode": "selection",
+    "shareToken": "uuid.signature",
+    "client": {
       "id": "uuid",
-      "originalFileName": "DSC_0001.jpg",
-      "title": "DSC_0001",
-      "previewUrl": "https://cdn.example.com/...",
-      "previewObjectKey": "photographers/.../previews/...",
-      "originalUrl": "https://cdn.example.com/...",
-      "originalObjectKey": "photographers/.../originals/...",
-      "width": 1920,
-      "height": 1280,
-      "sortIndex": 0,
-      "createdAt": "..."
-    }
-  ],
-  "selections": [
-    {
-      "id": "uuid",
-      "selectedPhotoIds": ["uuid1", "uuid2"],
-      "customerName": "张三",
-      "customerMessage": "这几张都很好！",
-      "createdAt": "..."
-    }
-  ],
-  "hasUnreadSelection": false
+      "name": "张三",
+      "phone": "13800000000",
+      "email": "client@example.com",
+      "note": "",
+      "createdAt": "...",
+      "updatedAt": "..."
+    },
+    "photos": [
+      {
+        "id": "uuid",
+        "originalFileName": "DSC_0001.jpg",
+        "title": "DSC_0001",
+        "previewUrl": "https://cdn.example.com/...",
+        "previewObjectKey": "photographers/.../previews/...",
+        "originalUrl": "https://cdn.example.com/...",
+        "originalObjectKey": "photographers/.../originals/...",
+        "width": 1920,
+        "height": 1280,
+        "sortIndex": 0,
+        "createdAt": "..."
+      }
+    ],
+    "selections": [
+      {
+        "id": "uuid",
+        "selectedPhotoIds": ["uuid1", "uuid2"],
+        "customerName": "张三",
+        "customerMessage": "这几张都很好！",
+        "createdAt": "..."
+      }
+    ],
+    "hasUnreadSelection": false
+  }
 }
 ```
-
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 成功 |
-| 404 | 相册不存在 |
 
 ---
 
@@ -340,10 +393,10 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | `{ "ok": true }` |
-| 404 | 相册不存在 |
+| code | 说明 |
+|------|------|
+| `1000` | `data: { "ok": true }` |
+| `4001` | 相册不存在 |
 
 ---
 
@@ -361,11 +414,11 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 返回更新后的相册详情 |
-| 400 | mode 值不合法 |
-| 404 | 相册不存在 |
+| code | 说明 |
+|------|------|
+| `1000` | 返回更新后的相册详情 |
+| `3002` | mode 值不合法 |
+| `4001` | 相册不存在 |
 
 ---
 
@@ -377,10 +430,10 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 返回相册详情，包含 `shareToken` |
-| 404 | 相册不存在 |
+| code | 说明 |
+|------|------|
+| `1000` | 返回相册详情，`data.shareToken` 即分享链接凭据 |
+| `4001` | 相册不存在 |
 
 ---
 
@@ -402,21 +455,25 @@ Authorization: Bearer <access_token>
 
 > `variant` 取值：`"preview"`（预览图）或 `"original"`（原图）
 
-**响应 200**
+**响应**
+
+| code | 说明 |
+|------|------|
+| `1000` | 成功 |
+| `3001` | 文件类型不是图片 / 缺少 variant |
+| `4001` | 相册不存在 |
 
 ```json
 {
-  "objectKey": "photographers/uid/galleries/gid/previews/1234-DSC_0001.jpg",
-  "uploadUrl": "https://r2.cloudflarestorage.com/...(预签名，5分钟有效)",
-  "publicUrl": "https://cdn.example.com/photographers/..."
+  "code": 1000,
+  "message": "success",
+  "data": {
+    "objectKey": "photographers/uid/galleries/gid/previews/1234-DSC_0001.jpg",
+    "uploadUrl": "https://r2.cloudflarestorage.com/...(预签名，5分钟有效)",
+    "publicUrl": "https://cdn.example.com/photographers/..."
+  }
 }
 ```
-
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 成功 |
-| 400 | 文件类型不是图片 / 缺少 variant |
-| 404 | 相册不存在 |
 
 ---
 
@@ -453,11 +510,11 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 返回已入库的照片数组 |
-| 400 | photos 为空或字段缺失 |
-| 404 | 相册不存在 |
+| code | 说明 |
+|------|------|
+| `1000` | `data` 为已入库的照片数组 |
+| `3001` | photos 为空或字段缺失 |
+| `4001` | 相册不存在 |
 
 ---
 
@@ -469,10 +526,10 @@ Authorization: Bearer <access_token>
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | `{ "ok": true }` |
-| 404 | 照片不存在 |
+| code | 说明 |
+|------|------|
+| `1000` | `data: { "ok": true }` |
+| `4001` | 照片不存在 |
 
 ---
 
@@ -480,7 +537,7 @@ Authorization: Bearer <access_token>
 
 **GET** `/api/admin/galleries/:id/selection.csv`
 
-返回最新一次选片结果的 CSV 文件（UTF-8 BOM，Excel 兼容）。
+返回最新一次选片结果的 CSV 文件（UTF-8 BOM，Excel 兼容）。**此接口返回原始 CSV 流，不使用统一 JSON 包装。**
 
 **响应 Header**
 
@@ -495,10 +552,10 @@ Content-Disposition: attachment; filename="slug-selection.csv"
 相册, 客户, 照片文件名, 照片标题, 是否已选, 提交人, 客户留言, 提交时间
 ```
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | CSV 文件流 |
-| 404 | 相册不存在 |
+| HTTP 状态码 | 说明 |
+|-------------|------|
+| `200` | CSV 文件流 |
+| `200` (JSON) | 相册不存在时返回 `{ "code": 4001, "message": "相册不存在", "data": null }` |
 
 ---
 
@@ -510,38 +567,42 @@ Content-Disposition: attachment; filename="slug-selection.csv"
 
 **GET** `/api/share/:token`
 
-**响应 200**
+**响应**
+
+| code | 说明 |
+|------|------|
+| `1000` | 成功 |
+| `4001` | token 无效 / 相册是草稿或已归档 |
 
 ```json
 {
-  "token": "uuid.signature",
-  "title": "张三婚礼精选",
-  "clientName": "张三",
-  "photographerName": "PhotoZ",
-  "shootDate": "2024-06-01",
-  "selectionLimit": 30,
-  "expiresAt": null,
-  "status": "published",
-  "mode": "selection",
-  "note": "请勾选喜欢的照片并提交。提交后记得通知摄影师查看结果。",
-  "photos": [
-    {
-      "id": "uuid",
-      "originalFileName": "DSC_0001.jpg",
-      "title": "DSC_0001",
-      "previewUrl": "https://cdn.example.com/...",
-      "originalUrl": "https://cdn.example.com/...",
-      "width": 1920,
-      "height": 1280
-    }
-  ]
+  "code": 1000,
+  "message": "success",
+  "data": {
+    "token": "uuid.signature",
+    "title": "张三婚礼精选",
+    "clientName": "张三",
+    "photographerName": "PhotoZ",
+    "shootDate": "2024-06-01",
+    "selectionLimit": 30,
+    "expiresAt": null,
+    "status": "published",
+    "mode": "selection",
+    "note": "请勾选喜欢的照片并提交。提交后记得通知摄影师查看结果。",
+    "photos": [
+      {
+        "id": "uuid",
+        "originalFileName": "DSC_0001.jpg",
+        "title": "DSC_0001",
+        "previewUrl": "https://cdn.example.com/...",
+        "originalUrl": "https://cdn.example.com/...",
+        "width": 1920,
+        "height": 1280
+      }
+    ]
+  }
 }
 ```
-
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 成功 |
-| 404 | token 无效 / 相册是草稿或已归档 |
 
 ---
 
@@ -563,37 +624,30 @@ Content-Disposition: attachment; filename="slug-selection.csv"
 
 **响应**
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 返回选片记录 |
-| 400 | 未选照片 / 超出限制数量 / 相册为浏览模式 |
-| 404 | token 无效 |
+| code | 说明 |
+|------|------|
+| `1000` | 成功，`data` 为选片记录 |
+| `3001` | 未选照片 / 超出限制数量 / 相册为浏览模式 |
+| `4001` | token 无效 |
 
 ```json
-// 200
 {
-  "id": "uuid",
-  "galleryId": "uuid",
-  "selectedPhotoIds": ["uuid1", "uuid2"],
-  "customerName": "张三",
-  "customerMessage": "这几张我都很喜欢！",
-  "createdAt": "2024-06-01T10:00:00.000Z"
+  "code": 1000,
+  "message": "success",
+  "data": {
+    "id": "uuid",
+    "galleryId": "uuid",
+    "selectedPhotoIds": ["uuid1", "uuid2"],
+    "customerName": "张三",
+    "customerMessage": "这几张我都很喜欢！",
+    "createdAt": "2024-06-01T10:00:00.000Z"
+  }
 }
 ```
 
 ---
 
-## 六、错误格式
-
-所有错误均返回统一 JSON 格式：
-
-```json
-{ "error": "错误描述" }
-```
-
----
-
-## 七、环境变量速查
+## 六、环境变量速查
 
 | 变量 | 说明 |
 |------|------|
