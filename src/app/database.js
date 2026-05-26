@@ -1,7 +1,10 @@
 const { Pool } = require('pg');
 const { DATABASE_URL } = require('./config');
 
-const pool = new Pool({ connectionString: DATABASE_URL });
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  max: process.env.VERCEL ? 1 : 10,
+});
 
 pool.on('connect', () => {
   console.log('数据库连接成功');
